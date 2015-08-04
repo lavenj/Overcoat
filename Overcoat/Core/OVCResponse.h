@@ -46,6 +46,11 @@
 @property (strong, nonatomic, readonly) Class resultClass;
 
 /**
+ Parsing/deserialization error, if any
+ */
+@property (strong, nonatomic) NSError *error;
+
+/**
  Returns the result key path in the JSON.
  
  This method returns `nil` by default. For JSON responses with additional metadata, subclasses

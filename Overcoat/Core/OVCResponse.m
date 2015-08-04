@@ -40,7 +40,8 @@
 
 + (instancetype)responseWithHTTPResponse:(NSHTTPURLResponse *)HTTPResponse
 															JSONObject:(id)JSONObject
-														 resultClass:(Class)resultClass {
+														 resultClass:(Class)resultClass
+{
 	OVCResponse *response = [[self alloc]init];
 	id result = JSONObject;
 
@@ -55,7 +56,7 @@
 
 	if (result != nil) {
 		if (resultClass != nil) {
-			NSValueTransformer *valueTransformer = nil;
+			NSValueTransformer<MTLTransformerErrorHandling> *valueTransformer = nil;
 
 #if OVERCOAT_USING_MANTLE_2
 			if ([result isKindOfClass:[NSDictionary class]]) {
@@ -70,7 +71,13 @@
 				valueTransformer = [NSValueTransformer mtl_JSONArrayTransformerWithModelClass:resultClass];
 			}
 #endif
-			result = [valueTransformer transformedValue:result];
+
+			BOOL success = NO;
+			NSError *transformerError = nil;
+			result = [valueTransformer transformedValue:result success:&success error:&transformerError];
+			if( transformerError ) {
+				response.error = transformerError;
+			}
 		}
 
 		response.result = result;
