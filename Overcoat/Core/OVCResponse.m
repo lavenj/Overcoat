@@ -35,71 +35,62 @@
 @implementation OVCResponse
 
 + (NSString *)resultKeyPathForJSONDictionary:(NSDictionary *)JSONDictionary {
-    return nil;
+	return nil;
 }
 
 + (instancetype)responseWithHTTPResponse:(NSHTTPURLResponse *)HTTPResponse
-                              JSONObject:(id)JSONObject
-                             resultClass:(Class)resultClass {
-    OVCResponse *response = nil;
-    id result = JSONObject;
+															JSONObject:(id)JSONObject
+														 resultClass:(Class)resultClass {
+	OVCResponse *response = [[self alloc]init];
+	id result = JSONObject;
 
-    if ([JSONObject isKindOfClass:[NSDictionary class]]) {
-        response = [MTLJSONAdapter modelOfClass:self fromJSONDictionary:JSONObject error:NULL];
-        NSString *resultKeyPath = [[response class] resultKeyPathForJSONDictionary:JSONObject];
-        if (resultKeyPath) {
-            result = [(NSDictionary *)JSONObject ovc_objectForKeyPath:resultKeyPath];
-        } else {
-            response = [[self alloc] init];
-        }
-    } else {
-        response = [[self alloc] init];
-    }
+	//pull the result out of the response class's result keypath, if there is one
+	if ([JSONObject isKindOfClass:[NSDictionary class]]) {
+		NSString *resultKeyPath = [[response class] resultKeyPathForJSONDictionary:JSONObject];
+		if (resultKeyPath) {
+			result = [JSONObject ovc_objectForKeyPath:resultKeyPath];
+		}
+	}
+	response.HTTPResponse = HTTPResponse;
 
-    if (response == nil) {
-        return nil;
-    }
-
-    response.HTTPResponse = HTTPResponse;
-
-    if (result != nil) {
-        if (resultClass != Nil) {
-            NSValueTransformer *valueTransformer = nil;
+	if (result != nil) {
+		if (resultClass != nil) {
+			NSValueTransformer *valueTransformer = nil;
 
 #if OVERCOAT_USING_MANTLE_2
-            if ([result isKindOfClass:[NSDictionary class]]) {
-                valueTransformer = [MTLJSONAdapter dictionaryTransformerWithModelClass:resultClass];
-            } else if ([result isKindOfClass:[NSArray class]]) {
-                valueTransformer = [MTLJSONAdapter arrayTransformerWithModelClass:resultClass];
-            }
+			if ([result isKindOfClass:[NSDictionary class]]) {
+				valueTransformer = [MTLJSONAdapter dictionaryTransformerWithModelClass:resultClass];
+			} else if ([result isKindOfClass:[NSArray class]]) {
+				valueTransformer = [MTLJSONAdapter arrayTransformerWithModelClass:resultClass];
+			}
 #else
-            if ([result isKindOfClass:[NSDictionary class]]) {
-                valueTransformer = [NSValueTransformer mtl_JSONDictionaryTransformerWithModelClass:resultClass];
-            } else if ([result isKindOfClass:[NSArray class]]) {
-                valueTransformer = [NSValueTransformer mtl_JSONArrayTransformerWithModelClass:resultClass];
-            }
+			if ([result isKindOfClass:[NSDictionary class]]) {
+				valueTransformer = [NSValueTransformer mtl_JSONDictionaryTransformerWithModelClass:resultClass];
+			} else if ([result isKindOfClass:[NSArray class]]) {
+				valueTransformer = [NSValueTransformer mtl_JSONArrayTransformerWithModelClass:resultClass];
+			}
 #endif
-            result = [valueTransformer transformedValue:result];
-        }
+			result = [valueTransformer transformedValue:result];
+		}
 
-        response.result = result;
-    }
+		response.result = result;
+	}
 
-    response.resultClass = resultClass;
-    return response;
+	response.resultClass = resultClass;
+	return response;
 }
 
 #pragma mark - MTLJSONSerializing
 
 + (NSDictionary *)JSONKeyPathsByPropertyKey {
 #if OVERCOAT_USING_MANTLE_2
-    return @{};
+	return @{};
 #else
-    return @{
-        @"HTTPResponse": [NSNull null],
-        @"result": [NSNull null],
-        @"resultClass": [NSNull null],
-    };
+	return @{
+					 @"HTTPResponse": [NSNull null],
+					 @"result": [NSNull null],
+					 @"resultClass": [NSNull null],
+					 };
 #endif
 }
 
